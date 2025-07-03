@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, areaToDatabase, databaseToArea, DatabaseArea } from '../../../lib/supabase';
+import { supabase, databaseToArea } from '../../../lib/supabase';
 
 // GET /api/geofences - Retrieve all geofences
 export async function GET(request: NextRequest) {

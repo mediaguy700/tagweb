@@ -35,7 +35,20 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [router]);
 
   const handleLogout = async () => {
-    await logoutAndRedirect('/signin');
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        router.push('/signin');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch {
+      console.error('Logout error occurred');
+    }
   };
 
   if (loading) {
@@ -85,7 +98,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       {/* Main content */}
       <main>
         {React.isValidElement(children) 
-          ? React.cloneElement(children, { user } as any)
+          ? React.cloneElement(children, { user } as unknown as { user: User })
           : children
         }
       </main>

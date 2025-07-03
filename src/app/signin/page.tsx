@@ -53,7 +53,7 @@ export default function SignIn() {
       } else {
         setError(result.error || 'Login failed');
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -201,7 +201,7 @@ export default function SignIn() {
           
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-black font-medium hover:underline">
                 Sign up
               </Link>

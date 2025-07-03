@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { supabase, areaToDatabase, databaseToArea, DatabaseArea } from '../lib/supabase';
+import React, { useEffect, useRef, useState } from 'react';
+import { supabase, databaseToArea, areaToDatabase } from '../lib/supabase';
 
 interface Location {
   lat: number;
@@ -9,29 +9,24 @@ interface Location {
   accuracy?: number;
 }
 
-interface LocationWithAccuracy {
-  lat: number;
-  lng: number;
-  accuracy: number;
-  timestamp: number;
-}
+
 
 interface Area {
   id: string;
   name: string;
   center: Location;
-  radius: number; // in feet
+  radius: number;
   color: string;
   isActive: boolean;
   isInside: boolean;
   created: Date;
 }
 
-interface GoogleMapProps {
-  // No props needed - completely public component
-}
 
-export default function GoogleMap({}: GoogleMapProps) {
+
+
+
+export default function GoogleMap() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +39,7 @@ export default function GoogleMap({}: GoogleMapProps) {
   const [areasPosition, setAreasPosition] = useState({ x: 16, y: 128 }); // Default position for Areas dialog
   const [showMapControls, setShowMapControls] = useState(false);
   const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [locationHistory, setLocationHistory] = useState<LocationWithAccuracy[]>([]);
+  const [locationHistory, setLocationHistory] = useState<Location[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [showAreaForm, setShowAreaForm] = useState(false);
   const [newArea, setNewArea] = useState({
@@ -345,7 +340,7 @@ export default function GoogleMap({}: GoogleMapProps) {
       }
     };
 
-    const getAverageLocation = (locations: LocationWithAccuracy[]): Location => {
+    const getAverageLocation = (locations: Location[]): Location => {
       if (locations.length === 0) {
         return { lat: 33.1844264401088, lng: -96.90661699192682 };
       }
@@ -356,7 +351,7 @@ export default function GoogleMap({}: GoogleMapProps) {
       let weightedLng = 0;
 
       locations.forEach(loc => {
-        const weight = 1 / Math.max(loc.accuracy, 1); // Avoid division by zero
+        const weight = 1 / Math.max(loc.accuracy || 1, 1); // Avoid division by zero
         totalWeight += weight;
         weightedLat += loc.lat * weight;
         weightedLng += loc.lng * weight;
@@ -365,7 +360,7 @@ export default function GoogleMap({}: GoogleMapProps) {
       return {
         lat: weightedLat / totalWeight,
         lng: weightedLng / totalWeight,
-        accuracy: Math.min(...locations.map(loc => loc.accuracy))
+        accuracy: Math.min(...locations.map(loc => loc.accuracy || 1))
       };
     };
 
@@ -482,11 +477,10 @@ export default function GoogleMap({}: GoogleMapProps) {
         (position) => {
           if (!isMounted.current) return;
 
-          const newLocation: LocationWithAccuracy = {
+          const newLocation: Location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: Date.now()
+            accuracy: position.coords.accuracy
           };
 
           console.log('New location reading:', newLocation);
@@ -501,15 +495,15 @@ export default function GoogleMap({}: GoogleMapProps) {
               console.log('Average location calculated:', avgLocation);
               
               setCurrentLocation(avgLocation);
-              setAccuracy(avgLocation.accuracy || newLocation.accuracy);
-              setLocationStatus(`High accuracy: ±${Math.round(avgLocation.accuracy || newLocation.accuracy)}m (${updated.length} readings)`);
+              setAccuracy(avgLocation.accuracy || newLocation.accuracy || null);
+              setLocationStatus(`High accuracy: ±${Math.round(avgLocation.accuracy || newLocation.accuracy || 1)}m (${updated.length} readings)`);
               
               // Check areas with new location
               checkAreas(avgLocation);
             } else {
               setCurrentLocation(newLocation);
-              setAccuracy(newLocation.accuracy);
-              setLocationStatus(`Improving accuracy: ±${Math.round(newLocation.accuracy)}m (${updated.length}/3 readings)`);
+              setAccuracy(newLocation.accuracy || null);
+              setLocationStatus(`Improving accuracy: ±${Math.round(newLocation.accuracy || 1)}m (${updated.length}/3 readings)`);
               
               // Check areas with new location
               checkAreas(newLocation);

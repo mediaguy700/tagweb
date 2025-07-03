@@ -38,7 +38,7 @@ export async function checkAuth(): Promise<AuthResponse> {
       success: true,
       user: data.user
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       error: 'Network error'
@@ -72,7 +72,7 @@ export async function loginUser(username: string, password: string): Promise<Aut
       user: data.user,
       message: data.message
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       error: 'Network error'
@@ -82,11 +82,11 @@ export async function loginUser(username: string, password: string): Promise<Aut
 
 // Register user
 export async function registerUser(
-  username: string, 
-  password: string, 
-  email?: string, 
-  first_name?: string, 
-  last_name?: string
+  username: string,
+  password: string,
+  email?: string,
+  firstName?: string,
+  lastName?: string
 ): Promise<AuthResponse> {
   try {
     const response = await fetch('/api/auth/register', {
@@ -94,32 +94,33 @@ export async function registerUser(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
-        username, 
-        password, 
-        email, 
-        first_name, 
-        last_name 
+      body: JSON.stringify({
+        username,
+        password,
+        email,
+        first_name: firstName,
+        last_name: lastName,
       }),
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (response.ok) {
+      return {
+        success: true,
+        user: data.user,
+        message: data.message,
+      };
+    } else {
       return {
         success: false,
-        error: data.error || 'Registration failed'
+        error: data.error || 'Registration failed',
       };
     }
-
-    return {
-      success: true,
-      message: data.message
-    };
-  } catch (error) {
+  } catch {
     return {
       success: false,
-      error: 'Network error'
+      error: 'Network error. Please try again.',
     };
   }
 }
@@ -145,7 +146,7 @@ export async function logoutUser(): Promise<AuthResponse> {
       success: true,
       message: data.message
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       error: 'Network error'
@@ -188,7 +189,7 @@ export async function refreshSession(): Promise<AuthResponse> {
       success: true,
       message: 'Session refreshed'
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       error: 'Network error'

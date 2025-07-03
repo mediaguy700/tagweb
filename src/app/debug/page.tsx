@@ -1,64 +1,70 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 
+interface DebugInfo {
+  environment: Record<string, string | undefined>;
+  geolocation: boolean;
+  googleMaps: boolean;
+  googleMapsLoaded: boolean;
+  window: Record<string, unknown>;
+  userAgent: string;
+}
+
 export default function DebugPage() {
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({
+    environment: {},
+    geolocation: false,
+    googleMaps: false,
+    googleMapsLoaded: false,
+    window: {},
+    userAgent: ''
+  });
 
   useEffect(() => {
-    const info = {
-      userAgent: navigator.userAgent,
-      geolocation: !!navigator.geolocation,
-      googleMaps: !!(window as any).google?.maps,
-      googleMapsLoaded: !!(window as any).google,
+    const info: DebugInfo = {
       environment: {
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing',
-        googleMapsKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing',
+        NODE_ENV: process.env.NODE_ENV,
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? 'Present' : 'Missing',
+        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing',
+        NEXT_PUBLIC_SUPABASE_KEY: process.env.NEXT_PUBLIC_SUPABASE_KEY ? 'Present' : 'Missing'
       },
+      geolocation: 'geolocation' in navigator,
+      googleMaps: typeof window !== 'undefined' && 'google' in window,
+      googleMapsLoaded: typeof window !== 'undefined' && window.google && 'maps' in window.google,
       window: {
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-        location: window.location.href,
+        innerWidth: typeof window !== 'undefined' ? window.innerWidth : 0,
+        innerHeight: typeof window !== 'undefined' ? window.innerHeight : 0,
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
+        platform: typeof window !== 'undefined' ? window.navigator.platform : '',
+        language: typeof window !== 'undefined' ? window.navigator.language : ''
       },
-      timestamp: new Date().toISOString(),
+      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : ''
     };
 
     setDebugInfo(info);
   }, []);
 
   const testGoogleMaps = () => {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=geometry`;
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      alert('Google Maps loaded successfully!');
-      window.location.reload();
-    };
-    
-    script.onerror = () => {
-      alert('Failed to load Google Maps');
-    };
-
-    document.head.appendChild(script);
+    if (typeof window !== 'undefined' && window.google && window.google.maps) {
+      alert('Google Maps is loaded and available!');
+    } else {
+      alert('Google Maps is not loaded.');
+    }
   };
 
   const testGeolocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation not supported');
-      return;
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          alert(`Geolocation works! Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`);
+        },
+        (error) => {
+          alert(`Geolocation error: ${error.message}`);
+        }
+      );
+    } else {
+      alert('Geolocation is not supported.');
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        alert(`Location: ${position.coords.latitude}, ${position.coords.longitude}`);
-      },
-      (error) => {
-        alert(`Geolocation error: ${error.message}`);
-      }
-    );
   };
 
   return (

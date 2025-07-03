@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, areaToDatabase, databaseToArea } from '../../../../lib/supabase';
+import { supabase, databaseToArea } from '../../../../lib/supabase';
 
 // GET /api/geofences/[id] - Retrieve a specific geofence
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     console.log('API: Fetching geofence with ID:', id);
     
     const { data, error } = await supabase
@@ -49,10 +49,10 @@ export async function GET(
 // PUT /api/geofences/[id] - Update a specific geofence
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     console.log('API: Updating geofence with ID:', id, body);
 
@@ -118,10 +118,10 @@ export async function PUT(
 // DELETE /api/geofences/[id] - Delete a specific geofence
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     console.log('API: Deleting geofence with ID:', id);
     
     const { error } = await supabase
